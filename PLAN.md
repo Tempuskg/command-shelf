@@ -1,0 +1,200 @@
+# Plan: Command Shelf VS Code Extension
+
+## TL;DR
+Build an **open-source** TypeScript VS Code extension providing a sidebar TreeView ("Command Shelf") for saving, organizing, and running terminal commands. Commands stored in `.vscode/command-shelf.json`, scoped per workspace. Supports flat groups, drag-and-drop reorder, and inline run buttons. Workspace-only for v1.
+
+- **License**: MIT
+- **Repository**: Public GitHub repo (`command-shelf`)
+- **Marketplace**: Free on the VS Code Marketplace
+
+---
+
+## Data Model
+
+**`.vscode/command-shelf.json`** schema:
+```json
+{
+  "version": 1,
+  "commands": [
+    { "id": "<uuid>", "label": "Start Dev", "command": "npm run dev", "group": "Dev", "sortOrder": 0 }
+  ],
+  "groups": [
+    { "id": "<uuid>", "label": "Dev", "sortOrder": 0 }
+  ]
+}
+```
+
+- `commands[].group` references `groups[].label` (nullable for ungrouped)
+- `sortOrder` drives ordering within siblings (groups ordered among groups, commands within their group)
+
+---
+
+## Architecture
+
+| Module | Responsibility |
+|---|---|
+| `src/extension.ts` | Activate/deactivate, register commands/providers |
+| `src/models.ts` | Interfaces: `ShelfCommand`, `ShelfGroup`, `ShelfData` |
+| `src/CommandStore.ts` | CRUD on `.vscode/command-shelf.json`, file watch, event emitter |
+| `src/CommandShelfProvider.ts` | `TreeDataProvider<ShelfItem>` + `TreeDragAndDropController` |
+| `src/CommandShelfItem.ts` | `TreeItem` subclass for commands and groups |
+
+---
+
+## Steps
+
+### Phase 1: Project Scaffold
+1. Initialize with `npm init`, install `@types/vscode`, `typescript`, `@vscode/test-electron`, `esbuild`
+2. Create `tsconfig.json` targeting ES2020, module NodeNext, strict mode
+3. Create `package.json` extension manifest with:
+   - `contributes.views` → sidebar container "commandShelf" with view "commandShelfView"
+   - `contributes.viewsContainers.activitybar` → icon + title "Command Shelf"
+   - `contributes.commands` → all registered commands (see below)
+   - `contributes.menus` → inline run button, context menus for edit/delete/move
+   - `activationEvents` → `onView:commandShelfView`
+4. Create `.vscodeignore`, `esbuild.mjs` bundler script
+5. Add npm scripts: `compile`, `watch`, `package`, `lint`
+
+### Phase 2: Data Layer (`CommandStore`)
+6. Implement `ShelfCommand`, `ShelfGroup`, `ShelfData` interfaces in `src/models.ts`
+7. Implement `CommandStore` class in `src/CommandStore.ts`:
+   - `load()` — read & parse JSON file, create if missing
+   - `save()` — write JSON atomically (write to temp then rename)
+   - `addCommand(label, command, group?)` — generate UUID, append, save
+   - `editCommand(id, updates)` — find by ID, merge, save
+   - `deleteCommand(id)` — remove by ID, save
+   - `addGroup(label)` / `deleteGroup(id, keepCommands)` / `editGroup(id, label)`
+   - `reorder(id, targetGroup, newSortOrder)` — for drag-and-drop
+   - `onDidChange` event (EventEmitter) — fires after any mutation
+   - FileSystemWatcher on `.vscode/command-shelf.json` for external edits → reload + fire event
+
+### Phase 3: TreeView (`CommandShelfProvider`)
+8. Implement `ShelfItem` union type (group node or command node) in `src/CommandShelfItem.ts`:
+   - Group items: collapsible, folder icon, context value `shelfGroup`
+   - Command items: leaf, terminal icon, context value `shelfCommand`, inline run button via `command` property
+9. Implement `CommandShelfProvider` in `src/CommandShelfProvider.ts`:
+   - `TreeDataProvider<ShelfItem>` — `getChildren()` returns groups + ungrouped commands at root; commands within a group as children
+   - `TreeDragAndDropController` — `handleDrag` serializes item IDs, `handleDrop` computes new sortOrder and group assignment, calls `CommandStore.reorder()`
+   - Subscribes to `CommandStore.onDidChange` → fires `_onDidChangeTreeData`
+10. Register provider in `extension.ts` via `vscode.window.createTreeView()` with `dragAndDropController`
+
+### Phase 4: Commands & UX
+11. Register VS Code commands:
+    - `commandShelf.addCommand` — `showInputBox` for label, then command string; optionally pick group via `showQuickPick`
+    - `commandShelf.editCommand` — pre-filled input boxes for label + command
+    - `commandShelf.deleteCommand` — confirmation dialog, then delete
+    - `commandShelf.runCommand` — get or create terminal named "Command Shelf", `sendText(command)`
+    - `commandShelf.addGroup` — `showInputBox` for group name
+    - `commandShelf.editGroup` — `showInputBox` pre-filled
+    - `commandShelf.deleteGroup` — confirm, option to reassign commands to ungrouped or delete them
+    - `commandShelf.copyCommand` — copy command string to clipboard
+12. Configure `package.json` menus:
+    - `view/title` → Add Command (+), Add Group (folder+ icon)
+    - `view/item/context` inline → Run (play icon) on commands
+    - `view/item/context` menu → Edit, Delete, Copy Command, Move to Group
+
+### Phase 5: Polish, Packaging & Open Source
+13. Add extension icon (simple SVG shelf/bookmark icon)
+14. Add `README.md` with feature overview, screenshots placeholder, usage instructions, and contribution section
+15. Add `CHANGELOG.md`
+16. Configure `esbuild` bundling for production, test it produces working `.vsix`
+17. Add ESLint config
+18. Add `LICENSE` (MIT)
+19. Add `CONTRIBUTING.md` — dev setup, building from source, PR guidelines, code style
+20. Add `.github/ISSUE_TEMPLATE/bug_report.md` and `feature_request.md`
+21. Add GitHub Actions CI workflow (`.github/workflows/ci.yml`) — lint, compile, test on push/PR
+22. Add `CODE_OF_CONDUCT.md`
+
+### Phase 6: Security & Validation
+23. Run Snyk code scan on all new TypeScript files
+24. Fix any identified issues, rescan until clean
+25. Input validation: sanitize command labels (no path traversal in filenames), validate JSON schema on load
+
+---
+
+## Registered Commands Summary
+
+| Command ID | Title | Where |
+|---|---|---|
+| `commandShelf.addCommand` | Add Command | View title bar (+) |
+| `commandShelf.editCommand` | Edit Command | Context menu on command |
+| `commandShelf.deleteCommand` | Delete Command | Context menu on command |
+| `commandShelf.runCommand` | Run Command | Inline button (▶) on command |
+| `commandShelf.copyCommand` | Copy Command | Context menu on command |
+| `commandShelf.addGroup` | Add Group | View title bar |
+| `commandShelf.editGroup` | Rename Group | Context menu on group |
+| `commandShelf.deleteGroup` | Delete Group | Context menu on group |
+
+---
+
+## Relevant Files (to create)
+
+- `package.json` — Extension manifest with contributions (views, commands, menus, activation)
+- `tsconfig.json` — TypeScript config
+- `esbuild.mjs` — Build/bundle script
+- `.vscodeignore` — Files to exclude from VSIX
+- `.gitignore` — Ignore `node_modules/`, `out/`, `*.vsix`
+- `LICENSE` — MIT license
+- `CONTRIBUTING.md` — Dev setup, PR guidelines, code style
+- `CODE_OF_CONDUCT.md` — Contributor Covenant
+- `.github/workflows/ci.yml` — GitHub Actions CI (lint, compile, test)
+- `.github/ISSUE_TEMPLATE/bug_report.md` — Bug report template
+- `.github/ISSUE_TEMPLATE/feature_request.md` — Feature request template
+- `src/extension.ts` — Entry point: activate registers store, provider, commands
+- `src/models.ts` — `ShelfCommand`, `ShelfGroup`, `ShelfData` interfaces
+- `src/CommandStore.ts` — File I/O, CRUD, FileSystemWatcher, EventEmitter
+- `src/CommandShelfProvider.ts` — TreeDataProvider + DragAndDropController
+- `src/CommandShelfItem.ts` — TreeItem subclasses for group/command nodes
+- `resources/command-shelf-icon.svg` — Activity bar icon
+
+---
+
+## Verification
+
+1. `npm run compile` succeeds with zero errors
+2. Launch Extension Development Host (`F5`), verify:
+   - "Command Shelf" appears in activity bar sidebar
+   - Add a command → appears in tree + written to `.vscode/command-shelf.json`
+   - Add a group → appears as collapsible folder node
+   - Add command to group → nested correctly
+   - Run command → executes in integrated terminal
+   - Edit command → updates label/command string
+   - Delete command/group → removed from tree and file
+   - Drag command → reorders or moves between groups
+   - Edit `.vscode/command-shelf.json` externally → tree refreshes
+   - Copy command → clipboard contains command string
+3. Close and reopen workspace → commands persist from file
+4. Open a different workspace → shelf is empty (workspace isolation confirmed)
+5. `npx vsce package` produces valid `.vsix`
+6. Snyk scan returns clean
+
+---
+
+## Decisions
+
+- **Storage**: `.vscode/command-shelf.json` — git-trackable, human-readable, workspace-scoped
+- **Groups**: Flat only (one level), no nesting for v1
+- **Drag-and-drop**: Supported for reordering and moving between groups
+- **Scope**: Workspace-only for v1, no global shelf
+- **Terminal reuse**: Reuse a named terminal "Command Shelf" if it exists, create if not
+- **No `tasks.json` integration**: Independent system, simpler UX
+
+---
+
+## Open Source Strategy
+
+- **License**: MIT — permissive, maximizes adoption
+- **Versioning**: Semantic Versioning (SemVer)
+- **Releases**: GitHub Releases with auto-generated changelogs; publish to VS Code Marketplace via `vsce publish`
+- **CI**: GitHub Actions runs lint + compile + tests on every push and PR
+- **Issue management**: Bug report and feature request templates; use GitHub labels for triage
+- **Contributing**: Documented in `CONTRIBUTING.md` — fork → branch → PR workflow, code style enforced by ESLint
+- **Code of Conduct**: Contributor Covenant v2.1
+
+---
+
+## Further Considerations
+
+1. **Terminal behavior on run**: Should running a command reuse one shared terminal, or create a new terminal per run? Recommendation: reuse a single named terminal (user can still open additional ones).
+2. **Environment variables / working directory**: For v1, commands run in the workspace root. Could add optional `cwd` per command in a future version.
+3. **Community features (post-v1)**: Accept community PRs for features like nested groups, global shelf, command variables/substitution, import/export.
