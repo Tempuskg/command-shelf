@@ -1,0 +1,9 @@
+.github/**
+.vscode/**
+.chat/**
+wiki/**
+src/**
+tsconfig.json
+esbuild.mjs
+PLAN.md
+*.tsbuildinfo

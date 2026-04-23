@@ -1,0 +1,148 @@
+{
+  "name": "command-shelf",
+  "displayName": "Command Shelf",
+  "description": "Save, organize, and run terminal commands from a workspace sidebar.",
+  "version": "0.0.2",
+  "publisher": "command-shelf",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Tempuskg/command-shelf.git"
+  },
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "commandShelf",
+          "title": "Command Shelf",
+          "icon": "resources/command-shelf-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "commandShelf": [
+        {
+          "id": "commandShelfView",
+          "name": "Command Shelf"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "commandShelf.addCommand",
+        "title": "Add Command",
+        "icon": "$(add)"
+      },
+      {
+        "command": "commandShelf.editCommand",
+        "title": "Edit Command",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "commandShelf.deleteCommand",
+        "title": "Delete Command",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "commandShelf.runCommand",
+        "title": "Run Command",
+        "icon": "$(play)"
+      },
+      {
+        "command": "commandShelf.copyCommand",
+        "title": "Copy Command",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "commandShelf.addGroup",
+        "title": "Add Group",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "commandShelf.editGroup",
+        "title": "Rename Group",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "commandShelf.deleteGroup",
+        "title": "Delete Group",
+        "icon": "$(trash)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "commandShelf.addCommand",
+          "when": "view == commandShelfView",
+          "group": "navigation"
+        },
+        {
+          "command": "commandShelf.addGroup",
+          "when": "view == commandShelfView",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "commandShelf.runCommand",
+          "when": "view == commandShelfView && viewItem == shelfCommand",
+          "group": "inline"
+        },
+        {
+          "command": "commandShelf.runCommand",
+          "when": "view == commandShelfView && viewItem == shelfCommand",
+          "group": "1_run"
+        },
+        {
+          "command": "commandShelf.copyCommand",
+          "when": "view == commandShelfView && viewItem == shelfCommand",
+          "group": "2_clipboard"
+        },
+        {
+          "command": "commandShelf.editCommand",
+          "when": "view == commandShelfView && viewItem == shelfCommand",
+          "group": "3_edit"
+        },
+        {
+          "command": "commandShelf.deleteCommand",
+          "when": "view == commandShelfView && viewItem == shelfCommand",
+          "group": "3_edit"
+        },
+        {
+          "command": "commandShelf.editGroup",
+          "when": "view == commandShelfView && viewItem == shelfGroup",
+          "group": "1_edit"
+        },
+        {
+          "command": "commandShelf.deleteGroup",
+          "when": "view == commandShelfView && viewItem == shelfGroup",
+          "group": "1_edit"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "package": "node esbuild.mjs --production",
+    "lint": "eslint . && tsc --noEmit"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.1",
+    "@types/node": "^22.15.3",
+    "@types/vscode": "^1.100.0",
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.25.3",
+    "eslint": "^9.25.1",
+    "globals": "^16.0.0",
+    "typescript-eslint": "^8.30.1",
+    "typescript": "^5.8.3"
+  }
+}

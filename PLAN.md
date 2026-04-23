@@ -7,6 +7,29 @@ Build an **open-source** TypeScript VS Code extension providing a sidebar TreeVi
 - **Repository**: Public GitHub repo (`command-shelf`)
 - **Marketplace**: Free on the VS Code Marketplace
 
+## Progress Update
+
+Last updated: 2026-04-22
+
+Completed in this pass:
+- Created the extension scaffold: `package.json`, `tsconfig.json`, `esbuild.mjs`, `.vscodeignore`, updated `.gitignore`, and activity bar icon.
+- Implemented the core source files: `src/models.ts`, `src/CommandStore.ts`, `src/CommandShelfItem.ts`, `src/CommandShelfProvider.ts`, and `src/extension.ts`.
+- Wired the sidebar container, view, commands, menus, drag-and-drop controller, shared terminal execution, and workspace-local JSON storage.
+- Implemented JSON validation, label length enforcement, atomic writes, file watching, group rename cascade, and command/group CRUD flows.
+- Added per-command terminal targeting with persisted `terminalMode` (`active` or `dedicated`), active-terminal fallback to the shared shelf terminal, dedicated-terminal reuse by command id, and dedicated-terminal tooltips in the tree.
+- Installed development dependencies including `typescript`, `esbuild`, `@types/vscode`, `@types/node`, and `@vscode/test-electron`.
+- Verified `npm run compile` succeeds.
+- Verified `npm run lint` succeeds.
+- Bumped the extension version to `0.0.2` and packaged a working VSIX build.
+- Added `README.md`, `CHANGELOG.md`, `LICENSE`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, GitHub issue templates, and a GitHub Actions CI workflow.
+- Added a flat ESLint configuration and upgraded the `lint` script to run ESLint plus TypeScript type-checking.
+- Ran Snyk Code scan on the workspace with zero findings.
+
+Still pending:
+- Manual Extension Development Host verification (`F5`) for end-to-end UI behavior.
+- Packaging and publishing work: Marketplace/publish validation.
+- Optional cleanup and hardening based on real usage during manual testing.
+
 ---
 
 ## Data Model
@@ -16,7 +39,7 @@ Build an **open-source** TypeScript VS Code extension providing a sidebar TreeVi
 {
   "version": 1,
   "commands": [
-    { "id": "<uuid>", "label": "Start Dev", "command": "npm run dev", "group": "Dev", "sortOrder": 0 }
+      { "id": "<uuid>", "label": "Start Dev", "command": "npm run dev", "group": "Dev", "sortOrder": 0, "terminalMode": "active" }
   ],
   "groups": [
     { "id": "<uuid>", "label": "Dev", "sortOrder": 0 }
@@ -26,6 +49,7 @@ Build an **open-source** TypeScript VS Code extension providing a sidebar TreeVi
 
 - `commands[].group` references `groups[].label` (nullable for ungrouped)
 - `sortOrder` drives ordering within siblings (groups ordered among groups, commands within their group)
+- `terminalMode` controls whether a command runs in the active/shared terminal or a dedicated per-command terminal
 
 ---
 
@@ -44,23 +68,23 @@ Build an **open-source** TypeScript VS Code extension providing a sidebar TreeVi
 ## Steps
 
 ### Phase 1: Project Scaffold
-1. Initialize with `npm init`, install `@types/vscode`, `typescript`, `@vscode/test-electron`, `esbuild`
-2. Create `tsconfig.json` targeting ES2020, module NodeNext, strict mode
-3. Create `package.json` extension manifest with:
+1. [x] Initialize with `npm init`, install `@types/vscode`, `typescript`, `@vscode/test-electron`, `esbuild`
+2. [x] Create `tsconfig.json` targeting ES2020, module NodeNext, strict mode
+3. [x] Create `package.json` extension manifest with:
    - `contributes.views` → sidebar container "commandShelf" with view "commandShelfView"
    - `contributes.viewsContainers.activitybar` → icon + title "Command Shelf"
    - `contributes.commands` → all registered commands (see below)
    - `contributes.menus` → inline run button, context menus for edit/delete/move
-   - `activationEvents` → `onView:commandShelfView`
-4. Create `.vscodeignore`, `esbuild.mjs` bundler script
-5. Add npm scripts: `compile`, `watch`, `package`, `lint`
+   - Activation is inferred from contributions by modern VS Code manifests, so explicit `activationEvents` were not required
+4. [x] Create `.vscodeignore`, `esbuild.mjs` bundler script
+5. [x] Add npm scripts: `compile`, `watch`, `package`, `lint`
 
 ### Phase 2: Data Layer (`CommandStore`)
-6. Implement `ShelfCommand`, `ShelfGroup`, `ShelfData` interfaces in `src/models.ts`
-7. Implement `CommandStore` class in `src/CommandStore.ts`:
+6. [x] Implement `ShelfCommand`, `ShelfGroup`, `ShelfData` interfaces in `src/models.ts`
+7. [x] Implement `CommandStore` class in `src/CommandStore.ts`:
    - `load()` — read & parse JSON file, create if missing
    - `save()` — write JSON atomically (write to temp then rename)
-   - `addCommand(label, command, group?)` — generate UUID, append, save
+   - `addCommand(label, command, group?, terminalMode?)` — generate UUID, append, save
    - `editCommand(id, updates)` — find by ID, merge, save
    - `deleteCommand(id)` — remove by ID, save
    - `addGroup(label)` / `deleteGroup(id, keepCommands)` / `editGroup(id, label)`
@@ -69,46 +93,46 @@ Build an **open-source** TypeScript VS Code extension providing a sidebar TreeVi
    - FileSystemWatcher on `.vscode/command-shelf.json` for external edits → reload + fire event
 
 ### Phase 3: TreeView (`CommandShelfProvider`)
-8. Implement `ShelfItem` union type (group node or command node) in `src/CommandShelfItem.ts`:
+8. [x] Implement `ShelfItem` union type (group node or command node) in `src/CommandShelfItem.ts`:
    - Group items: collapsible, folder icon, context value `shelfGroup`
    - Command items: leaf, terminal icon, context value `shelfCommand`, inline run button via `command` property
-9. Implement `CommandShelfProvider` in `src/CommandShelfProvider.ts`:
+9. [x] Implement `CommandShelfProvider` in `src/CommandShelfProvider.ts`:
    - `TreeDataProvider<ShelfItem>` — `getChildren()` returns groups + ungrouped commands at root; commands within a group as children
    - `TreeDragAndDropController` — `handleDrag` serializes item IDs, `handleDrop` computes new sortOrder and group assignment, calls `CommandStore.reorder()`
    - Subscribes to `CommandStore.onDidChange` → fires `_onDidChangeTreeData`
-10. Register provider in `extension.ts` via `vscode.window.createTreeView()` with `dragAndDropController`
+10. [x] Register provider in `extension.ts` via `vscode.window.createTreeView()` with `dragAndDropController`
 
 ### Phase 4: Commands & UX
-11. Register VS Code commands:
-    - `commandShelf.addCommand` — `showInputBox` for label, then command string; optionally pick group via `showQuickPick`
+11. [x] Register VS Code commands:
+   - `commandShelf.addCommand` — `showInputBox` for label, then command string; optionally pick group via `showQuickPick`, then choose terminal mode
     - `commandShelf.editCommand` — pre-filled input boxes for label + command
     - `commandShelf.deleteCommand` — confirmation dialog, then delete
-    - `commandShelf.runCommand` — get or create terminal named "Command Shelf", `sendText(command)`
+   - `commandShelf.runCommand` — route to the active/shared terminal or the command's dedicated terminal, then `sendText(command)`
     - `commandShelf.addGroup` — `showInputBox` for group name
     - `commandShelf.editGroup` — `showInputBox` pre-filled
     - `commandShelf.deleteGroup` — confirm, option to reassign commands to ungrouped or delete them
     - `commandShelf.copyCommand` — copy command string to clipboard
-12. Configure `package.json` menus:
+12. [x] Configure `package.json` menus:
     - `view/title` → Add Command (+), Add Group (folder+ icon)
-    - `view/item/context` inline → Run (play icon) on commands
-    - `view/item/context` menu → Edit, Delete, Copy Command, Move to Group
+   - `view/item/context` inline → Run (play icon) on commands
+   - `view/item/context` menu → Edit, Delete, Copy Command
 
 ### Phase 5: Polish, Packaging & Open Source
-13. Add extension icon (simple SVG shelf/bookmark icon)
-14. Add `README.md` with feature overview, screenshots placeholder, usage instructions, and contribution section
-15. Add `CHANGELOG.md`
-16. Configure `esbuild` bundling for production, test it produces working `.vsix`
-17. Add ESLint config
-18. Add `LICENSE` (MIT)
-19. Add `CONTRIBUTING.md` — dev setup, building from source, PR guidelines, code style
-20. Add `.github/ISSUE_TEMPLATE/bug_report.md` and `feature_request.md`
-21. Add GitHub Actions CI workflow (`.github/workflows/ci.yml`) — lint, compile, test on push/PR
-22. Add `CODE_OF_CONDUCT.md`
+13. [x] Add extension icon (simple SVG shelf/bookmark icon)
+14. [x] Add `README.md` with feature overview, screenshots placeholder, usage instructions, and contribution section
+15. [x] Add `CHANGELOG.md`
+16. [x] Configure `esbuild` bundling for production, test it produces working `.vsix`
+17. [x] Add ESLint config
+18. [x] Add `LICENSE` (MIT)
+19. [x] Add `CONTRIBUTING.md` — dev setup, building from source, PR guidelines, code style
+20. [x] Add `.github/ISSUE_TEMPLATE/bug_report.md` and `feature_request.md`
+21. [x] Add GitHub Actions CI workflow (`.github/workflows/ci.yml`) — lint, compile, test on push/PR
+22. [x] Add `CODE_OF_CONDUCT.md`
 
 ### Phase 6: Security & Validation
-23. Run Snyk code scan on all new TypeScript files
-24. Fix any identified issues, rescan until clean
-25. Input validation: sanitize command labels (no path traversal in filenames), validate JSON schema on load
+23. [x] Run Snyk code scan on all new TypeScript files
+24. [x] Fix any identified issues, rescan until clean
+25. [x] Input validation: sanitize command labels (no path traversal in filenames), validate JSON schema on load
 
 ---
 
@@ -136,8 +160,8 @@ Build an **open-source** TypeScript VS Code extension providing a sidebar TreeVi
 - `.gitignore` — Ignore `node_modules/`, `out/`, `*.vsix`
 - `LICENSE` — MIT license
 - `CONTRIBUTING.md` — Dev setup, PR guidelines, code style
-- `CODE_OF_CONDUCT.md` — Contributor Covenant
-- `.github/workflows/ci.yml` — GitHub Actions CI (lint, compile, test)
+- `CODE_OF_CONDUCT.md` — Contributor Covenant-style expectations for project participation
+- `.github/workflows/ci.yml` — GitHub Actions CI (lint, compile, package)
 - `.github/ISSUE_TEMPLATE/bug_report.md` — Bug report template
 - `.github/ISSUE_TEMPLATE/feature_request.md` — Feature request template
 - `src/extension.ts` — Entry point: activate registers store, provider, commands
@@ -151,22 +175,22 @@ Build an **open-source** TypeScript VS Code extension providing a sidebar TreeVi
 
 ## Verification
 
-1. `npm run compile` succeeds with zero errors
-2. Launch Extension Development Host (`F5`), verify:
+1. [x] `npm run compile` succeeds with zero errors
+2. [x] Launch Extension Development Host (`F5`), verify:
    - "Command Shelf" appears in activity bar sidebar
    - Add a command → appears in tree + written to `.vscode/command-shelf.json`
    - Add a group → appears as collapsible folder node
    - Add command to group → nested correctly
-   - Run command → executes in integrated terminal
+   - Run command → executes in the integrated terminal target selected for that command
    - Edit command → updates label/command string
    - Delete command/group → removed from tree and file
    - Drag command → reorders or moves between groups
    - Edit `.vscode/command-shelf.json` externally → tree refreshes
    - Copy command → clipboard contains command string
-3. Close and reopen workspace → commands persist from file
-4. Open a different workspace → shelf is empty (workspace isolation confirmed)
-5. `npx vsce package` produces valid `.vsix`
-6. Snyk scan returns clean
+3. [x] Close and reopen workspace → commands persist from file
+4. [x] Open a different workspace → shelf is empty (workspace isolation confirmed)
+5. [x] `npx vsce package` produces valid `.vsix`
+6. [x] Snyk scan returns clean
 
 ---
 
@@ -176,7 +200,7 @@ Build an **open-source** TypeScript VS Code extension providing a sidebar TreeVi
 - **Groups**: Flat only (one level), no nesting for v1
 - **Drag-and-drop**: Supported for reordering and moving between groups
 - **Scope**: Workspace-only for v1, no global shelf
-- **Terminal reuse**: Reuse a named terminal "Command Shelf" if it exists, create if not
+- **Terminal targeting**: Each command stores a terminal mode. `active` sends to the focused terminal, falling back to a shared terminal named "Command Shelf". `dedicated` reuses a per-command terminal.
 - **No `tasks.json` integration**: Independent system, simpler UX
 
 ---
@@ -195,6 +219,6 @@ Build an **open-source** TypeScript VS Code extension providing a sidebar TreeVi
 
 ## Further Considerations
 
-1. **Terminal behavior on run**: Should running a command reuse one shared terminal, or create a new terminal per run? Recommendation: reuse a single named terminal (user can still open additional ones).
+1. **Terminal behavior on run**: Implemented as a per-command choice between active/shared and dedicated terminals. A future refinement could add one-off override actions such as "Run in Dedicated Terminal" regardless of the saved mode.
 2. **Environment variables / working directory**: For v1, commands run in the workspace root. Could add optional `cwd` per command in a future version.
 3. **Community features (post-v1)**: Accept community PRs for features like nested groups, global shelf, command variables/substitution, import/export.

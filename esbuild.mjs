@@ -1,0 +1,25 @@
+import esbuild from 'esbuild';
+
+const args = new Set(process.argv.slice(2));
+const watch = args.has('--watch');
+const production = args.has('--production');
+
+const ctx = await esbuild.context({
+  entryPoints: ['src/extension.ts'],
+  bundle: true,
+  format: 'cjs',
+  platform: 'node',
+  target: 'node20',
+  outfile: 'dist/extension.js',
+  external: ['vscode'],
+  sourcemap: !production,
+  minify: production,
+  logLevel: 'info',
+});
+
+if (watch) {
+  await ctx.watch();
+} else {
+  await ctx.rebuild();
+  await ctx.dispose();
+}
