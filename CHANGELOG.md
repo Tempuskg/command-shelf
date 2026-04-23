@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.0.5 - 2026-04-22
+
+- Fixed Marketplace icon to match the sidebar icon design (blue rounded square, shelf lines, bookmark ribbon).
+
 ## 0.0.4 - 2026-04-22
 
 - Added a dedicated Marketplace icon so the listing uses branded artwork instead of the default placeholder.
