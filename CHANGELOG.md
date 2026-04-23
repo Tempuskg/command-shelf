@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.0.4 - 2026-04-22
+
+- Added a dedicated Marketplace icon so the listing uses branded artwork instead of the default placeholder.
+
 ## 0.0.3 - 2026-04-22
 
 - Updated the Marketplace publisher metadata for the public release.
