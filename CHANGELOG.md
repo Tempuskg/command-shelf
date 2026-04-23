@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.0.3 - 2026-04-22
+
+- Updated the Marketplace publisher metadata for the public release.
+- Prepared and published the extension from the `darrenjmcleod` publisher namespace.
+
 ## 0.0.2 - 2026-04-22
 
 - Added per-command terminal targeting with `active` and `dedicated` modes.
