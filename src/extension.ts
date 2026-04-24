@@ -247,7 +247,12 @@ async function promptForGroupLabel(value?: string): Promise<string | undefined> 
 }
 
 async function pickGroup(store: CommandStore, currentGroup: string | null): Promise<string | null> {
-  const picks: Array<vscode.QuickPickItem & { value: string | null }> = [
+  const picks: Array<vscode.QuickPickItem & { value: string | null | 'NEW_GROUP' }> = [
+    {
+      label: '$(plus) New group',
+      description: 'Create a new group',
+      value: 'NEW_GROUP',
+    },
     {
       label: 'Ungrouped',
       description: 'Show at the root of the shelf',
@@ -264,6 +269,15 @@ async function pickGroup(store: CommandStore, currentGroup: string | null): Prom
     ignoreFocusOut: true,
     placeHolder: currentGroup ?? 'Ungrouped',
   });
+
+  if (selected?.value === 'NEW_GROUP') {
+    const newGroupLabel = await promptForGroupLabel();
+    if (!newGroupLabel) {
+      return currentGroup;
+    }
+    await store.addGroup(newGroupLabel);
+    return newGroupLabel;
+  }
 
   return selected?.value ?? currentGroup;
 }
