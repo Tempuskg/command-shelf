@@ -2,7 +2,7 @@
   "name": "command-shelf",
   "displayName": "Command Shelf",
   "description": "Save, organize, and run terminal commands from a workspace sidebar.",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "publisher": "darrenjmcleod",
   "license": "MIT",
   "icon": "resources/marketplace-icon.png",
