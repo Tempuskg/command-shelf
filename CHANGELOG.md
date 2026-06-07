@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 - Added extension development launch and build tasks for VS Code and Cursor.
 - Replaced the external `$esbuild-watch` problem matcher with an inline matcher so F5 works without installing extra extensions.
 - Documented Cursor IDE installation and compatibility in the README.
+- Fixed CI by tracking `package-lock.json` for reproducible `npm ci` installs.
+- Added a GitHub Actions release workflow for tagged releases and optional Marketplace/Open VSX publishing.
+- Excluded `node_modules` from VSIX packaging via `.vscodeignore`.
 
 ## 0.0.5 - 2026-04-22
 

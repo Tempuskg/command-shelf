@@ -30,4 +30,4 @@ jobs:
         run: npm run compile
 
       - name: Package extension
-        run: npx vsce package --allow-package-all-secrets --skip-license
+        run: npx vsce package --skip-license

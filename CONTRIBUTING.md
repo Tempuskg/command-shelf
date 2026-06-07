@@ -38,3 +38,32 @@ Use the issue templates for bug reports and feature requests where possible.
 ## Code of Conduct
 
 By participating in this project, you agree to follow the Code of Conduct in `CODE_OF_CONDUCT.md`.
+
+## Releases
+
+Releases are triggered by pushing a version tag (for example `v0.0.7`).
+
+1. Update `version` in `package.json` and add a `CHANGELOG.md` entry.
+2. Commit and push to `main`.
+3. Create and push the tag:
+
+```powershell
+git tag v0.0.7
+git push origin v0.0.7
+```
+
+The [Release workflow](.github/workflows/release.yml) will:
+
+- lint, build, and package a `.vsix`
+- create a GitHub Release with the VSIX attached
+- publish to the VS Code Marketplace when `VSCE_PAT` is configured
+- publish to Open VSX when `OVSX_PAT` is configured
+
+### Repository secrets
+
+| Secret | Purpose |
+| --- | --- |
+| `VSCE_PAT` | [Azure DevOps PAT](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#publishing-extensions) with Marketplace **Manage** scope |
+| `OVSX_PAT` | [Open VSX access token](https://open-vsx.org/user-settings/tokens) for Cursor and other Open VSX editors |
+
+If a secret is not set, that publish step is skipped and the GitHub Release still completes.

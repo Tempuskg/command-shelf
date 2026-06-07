@@ -3,6 +3,7 @@
 .chat/**
 wiki/**
 src/**
+node_modules/**
 tsconfig.json
 esbuild.mjs
 PLAN.md
