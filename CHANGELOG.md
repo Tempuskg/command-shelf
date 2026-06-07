@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Fixed CI by tracking `package-lock.json` for reproducible `npm ci` installs.
 - Added a GitHub Actions release workflow for tagged releases and optional Marketplace/Open VSX publishing.
 - Excluded `node_modules` from VSIX packaging via `.vscodeignore`.
+- Switched packaging to `@vscode/vsce` (the deprecated `vsce` package does not support `--skip-license`).
 
 ## 0.0.5 - 2026-04-22
 

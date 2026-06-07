@@ -28,11 +28,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Build production bundle
-        run: npm run package
-
       - name: Package VSIX
-        run: npx vsce package --skip-license
+        run: npm run vsix
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -45,7 +42,7 @@ jobs:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
           if [ -n "$VSCE_PAT" ]; then
-            npx vsce publish --skip-license -p "$VSCE_PAT"
+            npx @vscode/vsce publish --skip-license -p "$VSCE_PAT"
           else
             echo "VSCE_PAT secret not set; skipping VS Code Marketplace publish."
           fi

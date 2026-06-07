@@ -93,7 +93,7 @@ Press `F5` in VS Code or Cursor to launch an Extension Development Host.
 ### Packaging
 
 ```bash
-npx vsce package --allow-package-all-secrets --skip-license
+npm run vsix
 ```
 
 ## Roadmap

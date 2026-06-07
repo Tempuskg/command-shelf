@@ -26,8 +26,5 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Compile
-        run: npm run compile
-
       - name: Package extension
-        run: npx vsce package --skip-license
+        run: npm run vsix
