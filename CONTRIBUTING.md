@@ -5,7 +5,7 @@
 1. Install Node.js 20 or newer.
 2. Run `npm install`.
 3. Run `npm run compile`.
-4. Press `F5` in VS Code to start an Extension Development Host.
+4. Press `F5` in VS Code or Cursor to start an Extension Development Host. This runs the default build task (`npm run watch`) and opens a second editor window with the extension loaded. No extra extensions are required for the build task.
 
 ## Development Workflow
 

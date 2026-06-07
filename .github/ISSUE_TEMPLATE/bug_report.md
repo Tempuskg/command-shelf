@@ -26,7 +26,8 @@ Describe what happened instead.
 
 ## Environment
 
-- VS Code version:
+- Editor: VS Code or Cursor IDE
+- Editor version:
 - Extension version:
 - OS:
 

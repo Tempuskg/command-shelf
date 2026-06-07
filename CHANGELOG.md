@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.0.7 - 2026-06-07
+
+- Lowered the VS Code engine requirement to `^1.85.0` so the extension installs in Cursor IDE and other Open VSX-compatible editors.
+- Added extension development launch and build tasks for VS Code and Cursor.
+- Replaced the external `$esbuild-watch` problem matcher with an inline matcher so F5 works without installing extra extensions.
+- Documented Cursor IDE installation and compatibility in the README.
+
 ## 0.0.5 - 2026-04-22
 
 - Fixed Marketplace icon to match the sidebar icon design (blue rounded square, shelf lines, bookmark ribbon).

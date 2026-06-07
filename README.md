@@ -1,6 +1,6 @@
 # Command Shelf
 
-Command Shelf is a VS Code extension that adds a sidebar for saving, grouping, and running terminal commands from the current workspace.
+Command Shelf is a VS Code and Cursor IDE extension that adds a sidebar for saving, grouping, and running terminal commands from the current workspace.
 
 Commands are stored in `.vscode/command-shelf.json`, so they stay local to the workspace and can be checked into source control when that makes sense for a team.
 
@@ -22,6 +22,22 @@ Commands are stored in `.vscode/command-shelf.json`, so they stay local to the w
 2. Select `Add Command` to create a saved command.
 3. Enter a label, the command text, an optional group, and the terminal mode.
 4. Run the command from the inline play button or the context menu.
+
+## Installation
+
+### VS Code
+
+Install [Command Shelf](https://marketplace.visualstudio.com/items?itemName=darrenjmcleod.command-shelf) from the VS Code Marketplace, or install a `.vsix` release from GitHub.
+
+### Cursor IDE
+
+Cursor uses the Open VSX registry instead of the VS Code Marketplace. You can install Command Shelf in any of these ways:
+
+1. Search for **Command Shelf** in Cursor's Extensions view (if the extension is published to Open VSX).
+2. Download a `.vsix` from [GitHub Releases](https://github.com/Tempuskg/command-shelf/releases) and run **Extensions: Install from VSIX...** from the Command Palette.
+3. Drag and drop the `.vsix` file onto the Extensions view.
+
+Command Shelf uses standard VS Code extension APIs and stores data in `.vscode/command-shelf.json`, so workspace shelves work the same in both editors.
 
 ## Data File
 
@@ -56,7 +72,7 @@ Command Shelf stores data in `.vscode/command-shelf.json` using this shape:
 
 - Node.js 20+
 - npm
-- VS Code 1.100.0+
+- VS Code 1.85.0+ or Cursor IDE 0.40+
 
 ### Setup
 
@@ -72,7 +88,7 @@ npm run watch
 npm run lint
 ```
 
-Press `F5` in VS Code to launch an Extension Development Host.
+Press `F5` in VS Code or Cursor to launch an Extension Development Host.
 
 ### Packaging
 
